@@ -16,6 +16,7 @@ import { isAuthenticated } from './middleware/auth.js';
 // Import routes
 import authRoutes from './routes/authRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
+import folderRoutes from './routes/folderRoutes.js';
 
 // Load environment variables
 dotenv.config();
@@ -113,8 +114,9 @@ app.use((req, res, next) => {
 });
 
 // Routes
-app.use('/auth', authRoutes);
+app.use('/', authRoutes);
 app.use('/upload', isAuthenticated, uploadRoutes);
+app.use('/folders', isAuthenticated, folderRoutes);
 
 // Home route
 app.get('/', (req, res) => {

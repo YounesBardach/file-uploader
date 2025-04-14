@@ -2,7 +2,14 @@
     <div class="col-md-8 mx-auto">
         <div class="card">
             <div class="card-header">
-                <h2 class="text-center">Upload Files</h2>
+                <h2 class="text-center">
+                    <% if (typeof currentFolder !== 'undefined') { %>
+                        <%= currentFolder.name %>
+                        <a href="/upload" class="btn btn-sm btn-secondary float-end">Back to Root</a>
+                    <% } else { %>
+                        Upload Files
+                    <% } %>
+                </h2>
             </div>
             <div class="card-body">
                 <% if (typeof success !== 'undefined') { %>
@@ -11,20 +18,58 @@
                 <% if (typeof error !== 'undefined') { %>
                     <div class="alert alert-danger"><%= error %></div>
                 <% } %>
+
+                <!-- Create Folder Form -->
+                <form action="/folders" method="POST" class="mb-4">
+                    <div class="input-group">
+                        <input type="text" class="form-control" name="name" placeholder="New Folder Name" required>
+                        <% if (typeof currentFolder !== 'undefined') { %>
+                            <input type="hidden" name="parentId" value="<%= currentFolder.id %>">
+                        <% } %>
+                        <button type="submit" class="btn btn-success">Create Folder</button>
+                    </div>
+                </form>
                 
-                <form action="/upload" method="POST" enctype="multipart/form-data">
+                <!-- Upload File Form -->
+                <form action="/upload" method="POST" enctype="multipart/form-data" class="mb-4">
                     <div class="mb-3">
                         <label for="file" class="form-label">Select File</label>
                         <input type="file" class="form-control" id="file" name="file" required>
+                        <% if (typeof currentFolder !== 'undefined') { %>
+                            <input type="hidden" name="folderId" value="<%= currentFolder.id %>">
+                        <% } %>
                     </div>
                     <div class="d-grid">
                         <button type="submit" class="btn btn-primary">Upload</button>
                     </div>
                 </form>
 
+                <!-- Folders List -->
+                <% if (typeof folders !== 'undefined' && folders.length > 0) { %>
+                    <div class="folders-list mb-4">
+                        <h3>Folders</h3>
+                        <div class="list-group">
+                            <% folders.forEach(function(folder) { %>
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <a href="/folders/<%= folder.id %>" class="text-decoration-none">
+                                            <i class="fas fa-folder me-2"></i>
+                                            <%= folder.name %>
+                                        </a>
+                                        <form action="/folders/<%= folder.id %>?_method=DELETE" method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure? This will delete the folder and all its contents.')">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% } %>
+
+                <!-- Files List -->
                 <% if (typeof files !== 'undefined' && files.length > 0) { %>
-                    <div class="file-list mt-4">
-                        <h3>Your Files</h3>
+                    <div class="file-list">
+                        <h3>Files</h3>
                         <div class="list-group">
                             <% files.forEach(function(file) { %>
                                 <div class="list-group-item">
@@ -43,9 +88,9 @@
                             <% }); %>
                         </div>
                     </div>
-                <% } else { %>
+                <% } else if (typeof folders === 'undefined' || folders.length === 0) { %>
                     <div class="text-center mt-4">
-                        <p>No files uploaded yet.</p>
+                        <p>No files or folders yet.</p>
                     </div>
                 <% } %>
             </div>

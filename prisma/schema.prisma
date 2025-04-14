@@ -13,6 +13,7 @@ model User {
   password  String
   name      String?
   files     File[]
+  folders   Folder[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -24,7 +25,22 @@ model File {
   mimetype  String
   size      Int
   userId    String
+  folderId  String?
   user      User     @relation(fields: [userId], references: [id])
+  folder    Folder?  @relation(fields: [folderId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Folder {
+  id        String   @id @default(uuid())
+  name      String
+  userId    String
+  parentId  String?
+  user      User     @relation(fields: [userId], references: [id])
+  parent    Folder?  @relation("FolderToFolder", fields: [parentId], references: [id])
+  children  Folder[] @relation("FolderToFolder")
+  files     File[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
