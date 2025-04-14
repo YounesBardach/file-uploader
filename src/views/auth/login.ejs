@@ -8,7 +8,7 @@
                 <% if (typeof error !== 'undefined') { %>
                     <div class="alert alert-danger"><%= error %></div>
                 <% } %>
-                <form action="/auth/login" method="POST">
+                <form action="/login" method="POST">
                     <div class="mb-3">
                         <label for="email" class="form-label">Email</label>
                         <input type="email" class="form-control" id="email" name="email" required>
@@ -22,7 +22,7 @@
                     </div>
                 </form>
                 <div class="text-center mt-3">
-                    <p>Don't have an account? <a href="/auth/register">Register here</a></p>
+                    <p>Don't have an account? <a href="/register">Register here</a></p>
                 </div>
             </div>
         </div>

@@ -52,7 +52,7 @@ export const register = asyncHandler(async (req, res) => {
 
     if (user) {
         req.flash('success', 'Registration successful! Please login.');
-        res.redirect('/auth/login');
+        res.redirect('/login');
     } else {
         res.render('auth/register', {
             title: 'Register',
