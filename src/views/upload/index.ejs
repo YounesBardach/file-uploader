@@ -1,0 +1,54 @@
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h2 class="text-center">Upload Files</h2>
+            </div>
+            <div class="card-body">
+                <% if (typeof success !== 'undefined') { %>
+                    <div class="alert alert-success"><%= success %></div>
+                <% } %>
+                <% if (typeof error !== 'undefined') { %>
+                    <div class="alert alert-danger"><%= error %></div>
+                <% } %>
+                
+                <form action="/upload" method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Select File</label>
+                        <input type="file" class="form-control" id="file" name="file" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Upload</button>
+                    </div>
+                </form>
+
+                <% if (typeof files !== 'undefined' && files.length > 0) { %>
+                    <div class="file-list mt-4">
+                        <h3>Your Files</h3>
+                        <div class="list-group">
+                            <% files.forEach(function(file) { %>
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between">
+                                        <h5 class="mb-1"><%= file.filename %></h5>
+                                        <small><%= new Date(file.createdAt).toLocaleDateString() %></small>
+                                    </div>
+                                    <p class="mb-1">Size: <%= (file.size / 1024).toFixed(2) %> KB</p>
+                                    <div class="btn-group">
+                                        <a href="/upload/<%= file.id %>" class="btn btn-sm btn-primary">Download</a>
+                                        <form action="/upload/<%= file.id %>?_method=DELETE" method="POST" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">Delete</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            <% }); %>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <div class="text-center mt-4">
+                        <p>No files uploaded yet.</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div> 
