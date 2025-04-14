@@ -1,0 +1,13 @@
+<div class="jumbotron">
+    <h1 class="display-4">Welcome to File Uploader</h1>
+    <p class="lead">A secure and easy way to upload and manage your files.</p>
+    <hr class="my-4">
+    <% if (typeof user !== 'undefined' && user) { %>
+        <p>You are logged in as <%= user.email %></p>
+        <a class="btn btn-primary btn-lg" href="/upload" role="button">Upload Files</a>
+    <% } else { %>
+        <p>Please login or register to start uploading files.</p>
+        <a class="btn btn-primary btn-lg me-2" href="/login" role="button">Login</a>
+        <a class="btn btn-secondary btn-lg" href="/register" role="button">Register</a>
+    <% } %>
+</div> 
