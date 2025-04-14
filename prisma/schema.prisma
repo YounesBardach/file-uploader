@@ -21,7 +21,8 @@ model User {
 model File {
   id        String   @id @default(uuid())
   filename  String
-  path      String
+  path      String   // This will now store the Supabase storage path
+  publicUrl String   // This will store the public URL from Supabase
   mimetype  String
   size      Int
   userId    String

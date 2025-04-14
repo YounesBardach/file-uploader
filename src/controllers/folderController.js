@@ -1,32 +1,49 @@
 import { PrismaClient } from '@prisma/client';
 import asyncHandler from 'express-async-handler';
-import fs from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { createClient } from '@supabase/supabase-js';
 
 const prisma = new PrismaClient();
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+
+// Initialize Supabase client
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+        auth: {
+            autoRefreshToken: true,
+            persistSession: false
+        }
+    }
+);
 
 // @desc    Create a new folder
 // @route   POST /folders
 export const createFolder = asyncHandler(async (req, res) => {
     const { name, parentId } = req.body;
 
-    const folder = await prisma.folder.create({
-        data: {
-            name,
-            userId: req.user.id,
-            parentId: parentId || null
-        }
-    });
+    try {
+        // Create folder in database
+        const folder = await prisma.folder.create({
+            data: {
+                name,
+                userId: req.user.id,
+                parentId: parentId || null
+            }
+        });
 
-    // Create physical folder
-    const folderPath = path.join(__dirname, '../../public/uploads', folder.id);
-    await fs.mkdir(folderPath, { recursive: true });
+        console.log('Folder created in database:', folder.id);
 
-    // Redirect to the newly created folder
-    res.redirect(`/folders/${folder.id}`);
+        // No need to create physical folder in Supabase Storage
+        // as it uses paths to simulate folders
+
+        res.redirect(`/folders/${folder.id}`);
+    } catch (error) {
+        console.error('Folder creation error:', error);
+        res.render('upload/index', {
+            title: 'Upload Files',
+            error: 'Error creating folder. Please try again.'
+        });
+    }
 });
 
 // @desc    Get folder contents
@@ -91,44 +108,51 @@ export const deleteFolder = asyncHandler(async (req, res) => {
         });
     }
 
-    // Delete all files in the folder
-    for (const file of folder.files) {
-        // Delete physical file
-        await fs.unlink(file.path);
-        // Delete file record
-        await prisma.file.delete({
-            where: { id: file.id }
-        });
-    }
-
-    // Recursively delete all subfolders and their contents
-    for (const subfolder of folder.children) {
-        // Delete files in subfolder
-        for (const file of subfolder.files) {
-            await fs.unlink(file.path);
-            await prisma.file.delete({
-                where: { id: file.id }
-            });
+    try {
+        // Delete all files in the folder from Supabase storage
+        for (const file of folder.files) {
+            console.log('Deleting file from Supabase:', file.path);
+            const { error } = await supabase.storage
+                .from('files')
+                .remove([file.path]);
+            if (error) {
+                console.error('Supabase delete error:', error);
+                throw error;
+            }
         }
-        // Delete subfolder record
+
+        // Delete files in subfolders from Supabase storage
+        for (const subfolder of folder.children) {
+            for (const file of subfolder.files) {
+                console.log('Deleting file from Supabase:', file.path);
+                const { error } = await supabase.storage
+                    .from('files')
+                    .remove([file.path]);
+                if (error) {
+                    console.error('Supabase delete error:', error);
+                    throw error;
+                }
+            }
+        }
+
+        // Delete folder and its contents from database
         await prisma.folder.delete({
-            where: { id: subfolder.id }
+            where: { id: req.params.id }
         });
-    }
 
-    // Delete physical folder and its contents
-    const folderPath = path.join(__dirname, '../../public/uploads', folder.id);
-    await fs.rm(folderPath, { recursive: true, force: true });
+        console.log('Folder and its contents deleted from database');
 
-    // Delete the folder itself from database
-    await prisma.folder.delete({
-        where: { id: req.params.id }
-    });
-
-    // If the folder was inside another folder, redirect to that folder
-    if (folder.parentId) {
-        res.redirect(`/folders/${folder.parentId}`);
-    } else {
-        res.redirect('/upload');
+        // If the folder was inside another folder, redirect to that folder
+        if (folder.parentId) {
+            res.redirect(`/folders/${folder.parentId}`);
+        } else {
+            res.redirect('/upload');
+        }
+    } catch (error) {
+        console.error('Delete error:', error);
+        res.render('error', {
+            title: 'Error',
+            message: 'Error deleting folder. Please try again.'
+        });
     }
 }); 
